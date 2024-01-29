@@ -15,7 +15,7 @@ fit_gam_stack_hurdle <- function(train_data_pres,
                                  test_data_pres,  #can be "NA" to ignore testing
                                  test_data_abund,  #can be "NA" to ignore testing
                                  species_list,
-                                 k,
+                                 k,  #wiggliness
                                  pres_threshold,  #keep = zero; used only if below = F
                                  pres_prevalence,  #T or F (use T if 'species richness' is important)
                                  save_model,  #T or F; don't save models during a CV process
@@ -51,9 +51,9 @@ fit_gam_stack_hurdle <- function(train_data_pres,
     setTxtProgressBar(pb,ss)
     sppx <- species_list[ss]
     
-    Mg_pres <- gam(get(sppx) ~ s(Start_latitude_DD, k=k) +
-                     s(glorys_sst, k=k) +
-                     s(glorys_mld, k=k) +
+    Mg_pres <- gam(get(sppx) ~ s(Latitude, k=k) +
+                     s(glorys_sst_C, k=k) +
+                     s(glorys_mld_m, k=k) +
                      s(Depth_ftm, k=k) +
                      s(lunar_illum, k=3) +
                      s(Area_swept_km2, k=k) + 
@@ -61,8 +61,8 @@ fit_gam_stack_hurdle <- function(train_data_pres,
                    data=train_data_pres,
                    family=binomial)
 
-    Mg_abund <- gam(get(sppx) ~ s(Start_latitude_DD, k=k) +
-                      s(glorys_sst, k=k) +
+    Mg_abund <- gam(get(sppx) ~ s(Latitude, k=k) +
+                      s(glorys_sst_C, k=k) +
                       s(lunar_illum, k=3) +
                       s(Depth_ftm, k=k) +
                       s(Area_swept_km2, k=3),

@@ -5,25 +5,25 @@
 ###    - James A. Smith Feb 2024                               ###
 ##################################################################
 
-## This script contains a function to fit a Tweedie GAMM
+## This script contains a function to fit a standard Random Forest (single model)
 ## It has function arguments to allow for a full model fit (test data is "NA") or
 ## allow for cross validation fits (test data is specified)
 
 
-fit_gam_stack_tweedie <- function(train_data,
-                                  test_data,
-                                  species_list,
-                                  k,  #wiggliness
-                                  pres_threshold,  #only used for AUC etc approximations; 0.1 works well
-                                  biomass_threshold,  #use a spp-specific minimum biomass threshold (below that is a zero)
-                                  save_model,
-                                  save_model_suffix) {
-  #pres_threshold is only to generate zeros for AUC etc estimates, which aren't very reliable here
+fit_rf_stack <- function(train_data,
+                         test_data,  #can be "NA" to ignore CV testing
+                         species_list,
+                         mtry,  #number of variables to try at each split
+                         ntrees,  #number of trees
+                         pres_threshold,  #only used for AUC etc approximations; 0.1 works well
+                         biomass_threshold,  #use a spp-specific minimum biomass threshold (below that is a zero)
+                         save_model,  #T or F
+                         save_model_suffix) {  
   
   ## Create files to save data
   save_fit <- as.data.frame(matrix(data=NA, nrow=nrow(train_data), ncol=length(species_list)))
   colnames(save_fit) <- species_list
-  dev_expl <- data.frame(species=species_list, dev_expl=0)
+  oob_perf <- data.frame(species=species_list, oob_r2=NA)
   test_r2_rmse <- data.frame(species=species_list, auc=0, accuracy=0, specificity=0, f1_score=0,
                              r2=0, rmse=0, rmae=0)
   if (is.na(test_data)[1] == T) { 
@@ -37,28 +37,23 @@ fit_gam_stack_tweedie <- function(train_data,
   for (ss in 1:length(species_list)) {
     
     setTxtProgressBar(pb,ss)
+    
     sppx <- species_list[ss]
     
-    Mg_tw <- gam(get(sppx) ~ s(Latitude, k=k) +
-                   s(glorys_sst_C, k=k) +
-                   s(glorys_mld_m, k=k) +
-                   s(Depth_ftm, k=k) +
-                   s(lunar_illum, k=3) +
-                   s(Area_swept_km2, k=k) +
-                   s(Boat_ID, bs="re"),
-                 data=train_data,
-                 family=tw())
-    #k for lunar-Illum reduced to allow only basic domed relationships and avoid overfitting
+    Mrf <- randomForest(as.formula(paste0(sppx," ~ Latitude + Depth_ftm + glorys_sst_C +
+                                         glorys_mld_m + lunar_illum + Area_swept_km2")),
+                        data=train_data, importance=T,
+                        keep.inbag=T, num.trees=ntrees, mtry=mtry,
+                        keep.forest=T)
 
     if (save_model == T) {
-      saveRDS(Mg_tw, paste0("Spp_",ss,"Mg_tw_",save_model_suffix,".rds"))
+      saveRDS(Mrf, paste0("Spp_",ss,"Mrf_",save_model_suffix,".rds"))
     }
     
-    #Calculate fitted values
-    #predict can give warning about missing factor levels (for REs), but they are ignored in any case
-    P <- predict(Mg_tw, train_data, type="response", exclude="s(Boat_ID)")
+    #calculate fitted values
+    P <- predict(Mrf, newdata=train_data, type="response")
     
-    if (biomass_threshold == T) {  #calculate threshold for this species based on its prevalence
+    if (biomass_threshold == T) {  #calculate threshold for this species based on its biomass
       colxx <- which(names(train_data) == sppx)
       biom_thresholdx <- train_data[,colxx]
       biom_thresholdx <- biom_thresholdx[biom_thresholdx>0]
@@ -71,14 +66,14 @@ fit_gam_stack_tweedie <- function(train_data,
     if (is.na(test_data)[1] == T) { 
     } else {
       
-      P_test <- predict(Mg_tw,  test_data, type="response", exclude="s(Boat_ID)")
+      P_test <- predict(Mrf,  test_data, type="response")
       if (biomass_threshold == T) {
         P_test[P_test <= biom_threshold] <- 0  #truncate test values
       }
       save_test[,ss] <- P_test
       
       P_test_pa <- P_test
-      P_test_pa[P_test_pa < pres_threshold] <- 0  #this is only used to calc. AUC etc
+      P_test_pa[P_test_pa < pres_threshold] <- 0
       P_test_pa[P_test_pa > 0] <- 1  #convert to pres/abs
       test_data_pa <- test_data[,sppx]
       test_data_pa[test_data_pa > 0] <- 1  #convert to pres/abs
@@ -95,7 +90,7 @@ fit_gam_stack_tweedie <- function(train_data,
                                     positive="1",
                                     mode="everything")
         accuracy <- conf_mat$overall["Accuracy"] #1 is best, biased by lots of zeros
-        specificity <- conf_mat$byClass["Specificity"]  #how good are we at zeros (1 is best)
+        specificity <- conf_mat$byClass["Specificity"]  #how good are we at occurrences (1s)
         f1_score <- conf_mat$byClass["F1"]  #1 is best, balances precision and recall - how good are we at absences (0s)
       }
       
@@ -114,17 +109,17 @@ fit_gam_stack_tweedie <- function(train_data,
       
     }
     
-    #Save predictions and in-sample performance
+    #Save predictions and model performance
     save_fit[,ss] <- P
-    dev_expl$dev_expl[ss] <- round(summary(Mg_tw)$dev.expl,3)
+    oob_perf$oob_r2[ss] <- round(Mrf$rsq[length(Mrf$rsq)],3)
     
   }
   
   close(pb)
-  
   return(list(predicted=save_fit,
-              dev_explained=dev_expl,
+              oob_performance=oob_perf,
               test_predicted=save_test,
               test_r2_rmse=test_r2_rmse))
   
 }
+
