@@ -23,3 +23,10 @@ library(abind)  #use with Hmsc
 source("Performance functions.R")
 source("Cross validation function.R")
 source("GAMM hurdle function.R")
+source("GAMM tweedie function.R")
+
+## Load example data (this is dummy data to illustrate format)
+my_data <- readRDS("Example_data.rds")
+
+
+
