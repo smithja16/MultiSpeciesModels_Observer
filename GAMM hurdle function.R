@@ -16,7 +16,7 @@ fit_gam_stack_hurdle <- function(train_data_pres,
                                  test_data_abund,  #can be "NA" to ignore testing
                                  species_list,
                                  k,
-                                 pres_threshold,  #keep = zero
+                                 pres_threshold,  #keep = zero; used only if below = F
                                  pres_prevalence,  #T or F (use T if 'species richness' is important)
                                  save_model,  #T or F; don't save models during a CV process
                                  save_model_suffix) {  #only if above is T
