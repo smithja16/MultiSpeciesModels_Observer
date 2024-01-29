@@ -6,8 +6,8 @@
 ##################################################################
 
 ## This script contains a function to fit a Hurdle (delta) GAMM
-## It has function commands to allow for a full model fit (test data is NA) or
-## allows for cross validation fits (test data is specified)
+## It has function arguments to allow for a full model fit (test data is "NA") or
+## allow for cross validation fits (test data is specified)
 
 
 fit_gam_stack_hurdle <- function(train_data_pres,
@@ -83,7 +83,7 @@ fit_gam_stack_hurdle <- function(train_data_pres,
     }
     
     #Calculate fitted values
-    # #predict can give warning about missing factor levels (for REs), but they are ignored in the prediction
+    #predict can give warning about missing factor levels (for REs), but they are ignored in the prediction
     P_pres_l <- predict(Mg_pres, train_data_pres, type="link", exclude="s(Boat_ID)")
     P_abund_l <- predict(Mg_abund, train_data_abund, type="link")
     P_pres <- Mg_pres$family$linkinv(P_pres_l)
@@ -95,7 +95,7 @@ fit_gam_stack_hurdle <- function(train_data_pres,
     if (is.na(test_data_pres)[1] == T) { 
     } else {
       
-      P_pres_test_l <- predict(Mg_pres,  test_data_pres, type="link", exclude="s(Boat_ID)") #exclude=c("s(Boat_ID)", "s(Trip_ID)"))
+      P_pres_test_l <- predict(Mg_pres,  test_data_pres, type="link", exclude="s(Boat_ID)")
       P_abund_test_l <- predict(Mg_abund, test_data_abund, type="link")
       P_pres_test <- Mg_pres$family$linkinv(P_pres_test_l)
       P_abund_test <- Mg_abund$family$linkinv(P_abund_test_l)
