@@ -14,7 +14,7 @@
 
 ###### Load packages ######
 library(mgcv)  #GAMs
-library(caret) #Performance functions
+library(caret) #Downsampling and performance functions
 library(pROC)  #AUC function
 library(randomForest)  #RFs
 library(smotefamily)  #Smote for RFs
