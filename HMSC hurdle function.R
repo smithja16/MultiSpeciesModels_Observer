@@ -12,7 +12,7 @@
 
 
 fit_hmsc_hurdle <- function(train_data_pres,
-                            train_data_abund,
+                            train_data_abund, #use NAs in place of zeros in abundance part
                             species_list,
                             first_species_name, #name of first species, e.g. "Spp1"
                             nChains,  #number of MCMC chains
@@ -20,7 +20,6 @@ fit_hmsc_hurdle <- function(train_data_pres,
                             samples,  #desired MCMC samples
                             transient,  #MCMC burn in samples
                             nParallel,  #Cores; usually make cores = chains
-                            pres_threshold,  #leave = 0; not used when expected=F (recommended)
                             YScale,  #T or F; Scale the response of the abundance component (T recommended) 
                             calc_fit, #T or F (F saves lots of time, but we don't know goodness of fit)
                             save_model,  #T or F
@@ -29,8 +28,6 @@ fit_hmsc_hurdle <- function(train_data_pres,
   
   # Save data
   model_fit <- data.frame(species=species_list, AUC_pres=0, R2_abund=0)
-  test_r2_rmse <- data.frame(species=species_list, auc_pres=NA, accuracy_pres=NA, specificity_pres=NA, f1_score_pres=NA,
-                             r2_abund=NA, r2_total=NA, rmse_abund=NA, rmse_total=NA, rrmse_total=NA, rmae_total=NA)
   
   # Set up models
   X_pres = train_data_pres[,c("Latitude","Depth_ftm","glorys_sst_C","glorys_mld_m","lunar_illum","Area_swept_km2")]
@@ -107,10 +104,8 @@ fit_hmsc_hurdle <- function(train_data_pres,
     
     # Calculate total biomass
     preds_t <- preds_a
-    preds_p0 <- preds_p
-    preds_p0[preds_p0 < pres_threshold] <- 0
     for (ff in 1:dim(preds_a)[3]) {
-      preds_t[,,ff] <- preds_p0[,,ff] * exp(preds_a[,,ff])  #undo the log
+      preds_t[,,ff] <- preds_p[,,ff] * exp(preds_a[,,ff])  #undo the log
     }
     preds_t_mean <- apply(preds_t, c(1,2), mean)
 
@@ -122,3 +117,4 @@ fit_hmsc_hurdle <- function(train_data_pres,
               fitted_totals=preds_t_mean))
   
 }
+

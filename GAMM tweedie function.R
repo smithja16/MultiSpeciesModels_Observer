@@ -13,7 +13,7 @@
 fit_gam_stack_tweedie <- function(train_data,
                                   test_data,
                                   species_list,
-                                  k,  #wiggliness
+                                  k,              #wiggliness
                                   pres_threshold,  #only used for AUC etc approximations; 0.1 works well
                                   biomass_threshold,  #use a spp-specific minimum biomass threshold (below that is a zero)
                                   save_model,

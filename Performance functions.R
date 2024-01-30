@@ -5,7 +5,7 @@
 ###    - James A. Smith Feb 2024                               ###
 ##################################################################
 
-## This script contains some necessary functions
+## This script contains some basic performance functions
 
 ## Performance functions
 RMSE = function(p, o) {
