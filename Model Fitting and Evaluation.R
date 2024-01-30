@@ -148,7 +148,8 @@ hmsc_spatial$model_fit
 ###### Run 5-fold cross-validation on all models ######
 
 ## Set up folds
-myfolds <- CreateFolds(data=mydata, n_folds=5, n_repeats=3, seed=117)
+n_folds <- 5; n_repeats <- 3
+myfolds <- CreateFolds(data=mydata, n_folds=n_folds, n_repeats=n_repeats, seed=117)
 folds <- myfolds$folds
 fold_rows <- myfolds$fold_rows
 
@@ -212,7 +213,7 @@ for (nn in 1:(n_folds*n_repeats)) {
 boxplot(save_auc[,3:ncol(save_auc)]); abline(h=0.70, col="red")
 boxplot(save_rmae[,3:ncol(save_rmae)], ylim=c(0,15)); abline(h=1, col="red")
 
-## CV on Random Forest Hurdle (include class balancing or not)
+## CV on Random Forest Hurdle (include class balancing or not with 'down_smote')
 save_auc <- folds
 dfspp <- as.data.frame(matrix(data=0, nrow=nrow(save_auc), ncol=length(spp_list)))
 colnames(dfspp) <- spp_list
@@ -236,7 +237,7 @@ for (nn in 1:(n_folds*n_repeats)) {
                                     ntrees = 1200,
                                     pres_threshold = 0,
                                     pres_prevalence = T,
-                                    down_smote = T,  #T or F
+                                    down_smote = T,  #T or F; use class balancing or not
                                     smote_thresh = 140*0.8,  #only works if above is T; 0.8 bc this is 5-fold CV
                                     save_model = F,  #don't save model objects during CV
                                     save_model_suffix = "NA")
@@ -275,13 +276,13 @@ for (nn in 1:(n_folds*n_repeats)) {
 }
 
 ## CV on Hmsc JSDM vanilla
-# This uses the Hmsc appropach to CV due to speed and simplicity
+# This uses the in-built Hmsc approach to CV due to speed and simplicity
 # Load the fitted models saved when using 'fit_hmsc_hurdle'
 Mhm_pres <- readRDS()
 Mhm_abund <- readRDS()
 # For saving data
 test_r2_rmse <- data.frame(species=spp_list, auc_pres=NA, r2_abund=NA, r2_total=NA, rmae_total=NA)
-# Create partition (* must use same partition for both components)
+# Create partition (* must use same partition for both hurdle components)
 partitionP = createPartition(hM = Mhm_pres, nfolds = 5, column = "sample")
 
 # Presence component
@@ -291,6 +292,7 @@ predsP = computePredictedValues(hM = Mhm_pres,
                                 nParallel = 3,
                                 expected = FALSE)
 t2 <- Sys.time(); t2-t1
+# the 'pcomputePredictedValues' function can be faster here - see Hmsc manual
 cv_res <- evaluateModelFit(hM = Mhm_pres, predY = predsP)
 test_r2_rmse$auc_pres <- cv_res$AUC 
 barplot(cv_res$AUC); abline(h=0.7, col="red")
@@ -326,7 +328,6 @@ mean(test_r2_rmse$r2_total)
 mean(test_r2_rmse$rmae_total)
 
 ## CV on Hmsc JSDM Spatial
-# This uses the Hmsc appropach to CV due to speed and simplicity
 # Load the fitted models saved when using 'fit_hmsc_spatial_hurdle'
 MhmS_pres <- readRDS()
 MhmS_abund <- readRDS()
