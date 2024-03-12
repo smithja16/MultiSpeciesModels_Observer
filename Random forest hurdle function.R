@@ -137,7 +137,6 @@ fit_rf_stack_hurdle <- function(train_data_pres,
       pres_thresholdx <- train_data_pres[,colxx]
       pres_threshold <- length(pres_thresholdx[pres_thresholdx==1])/nrow(train_data_pres)
       if (pres_threshold > 0.95) { pres_threshold <- 0.95 }
-      save_prev$prevalence[ss] <- pres_threshold
     }
     
     #calculate fitted values
