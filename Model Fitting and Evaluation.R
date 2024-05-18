@@ -64,7 +64,7 @@ gam_hurdle <- fit_gam_stack_hurdle(train_data_pres = mydata_pres,
                                    test_data_pres = NA,
                                    test_data_abund = NA,
                                    species_list = spp_list,
-                                   k = 5,
+                                   k = 4,  #lowered tp 4 for the example data
                                    pres_threshold = 0,
                                    pres_prevalence = T,
                                    save_model = T,
@@ -75,7 +75,7 @@ gam_hurdle$predicted_totals  #fitted total biomasses
 gam_tweedie <- fit_gam_stack_tweedie(train_data = mydata,
                                      test_data = NA,
                                      species_list = spp_list,
-                                     k = 5,
+                                     k = 4,  #lowered tp 4 for the example data
                                      pres_threshold = 0.1,
                                      biomass_threshold = T,
                                      save_model = T,
@@ -98,6 +98,7 @@ rf_hurdle <- fit_rf_stack_hurdle(train_data_pres = mydata_pres,
                                  save_model = T,
                                  save_model_suffix = "runNumber_date")
 rf_hurdle$oob_performance  #out-of-bag (OOB) goodness of fit per taxa
+rf_hurdle$predicted_totals  #fitted total biomass
 
 rf_single <- fit_rf_stack(train_data = mydata,
                           test_data = NA,
@@ -108,7 +109,8 @@ rf_single <- fit_rf_stack(train_data = mydata,
                           biomass_threshold = T,  #truncates predictions
                           save_model = T,
                           save_model_suffix = "runNumber_date")
-rf_single$oob_performance
+rf_single$oob_performance  #out-of-bag (OOB) goodness of fit per taxa
+rf_single$predicted  #fitted total biomass
 
 ## Hmsc JSDMs (can take DAYS to fit, so start small and build up)
 hmsc_vanilla <- fit_hmsc_hurdle(train_data_pres = mydata_pres,
