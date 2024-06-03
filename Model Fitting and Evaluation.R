@@ -112,7 +112,7 @@ rf_single <- fit_rf_stack(train_data = mydata,
 rf_single$oob_performance  #out-of-bag (OOB) goodness of fit per taxa
 rf_single$predicted  #fitted total biomass
 
-## Hmsc JSDMs (can take DAYS to fit, so start small and build up)
+## Hmsc JSDMs (can take DAYS to fit, so start small and build up; this example is quick)
 hmsc_vanilla <- fit_hmsc_hurdle(train_data_pres = mydata_pres,
                                 train_data_abund = mydata_abund,
                                 species_list = spp_list,
